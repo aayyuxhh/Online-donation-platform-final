@@ -1,0 +1,28 @@
+/* React Impact Calculator component */
+.react-impact-section { padding-top: 1.2rem; padding-bottom: 1.2rem; }
+.react-impact-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.6rem;
+  box-shadow: var(--shadow-sm);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 1.5rem;
+  align-items: center;
+}
+.react-impact-card h2 { font-family: var(--font-display); font-size: 2rem; margin-bottom: .35rem; }
+.react-impact-card p { color: var(--text-secondary); }
+.react-impact-slider { width: 100%; accent-color: var(--accent); margin: 1.1rem 0; }
+.react-impact-result {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.3rem;
+  text-align: center;
+}
+.react-impact-result strong { display:block; color: var(--accent); font-size: 2rem; }
+.react-impact-result span { color: var(--text-secondary); font-size: .9rem; }
+@media (max-width: 700px) {
+  .react-impact-card { grid-template-columns: 1fr; }
+}
