@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explore Causes — KindredFund</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="navbar-slot"></div>
+
+  <main class="container">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Explore Verified Causes</h1>
+        <p class="section-subtitle">Filter by sector, urgency, or saved bookmarks to find causes close to your heart.</p>
+      </div>
+      <span id="resultCountBadge" class="badge-pill">Showing all campaigns</span>
+    </div>
+
+    <!-- Filter & Search Controls -->
+    <div class="filter-bar">
+      <input type="text" id="searchInput" class="input-control" placeholder="🔍 Search by title, NGO, or city..." oninput="refreshCurrentPage()">
+
+      <select id="categoryFilter" class="select-control" onchange="refreshCurrentPage()">
+        <option value="ALL">All Categories</option>
+        <option value="Education">Education</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Environment">Environment</option>
+        <option value="Food & Hunger">Food & Hunger</option>
+        <option value="Animal Welfare">Animal Welfare</option>
+      </select>
+
+      <select id="statusFilter" class="select-control" onchange="refreshCurrentPage()">
+        <option value="ALL">All Campaigns</option>
+        <option value="URGENT">🔥 Urgent Only</option>
+        <option value="SAVED">♥ Saved Bookmarks</option>
+      </select>
+
+      <select id="sortFilter" class="select-control" onchange="refreshCurrentPage()">
+        <option value="DEFAULT">Sort: Featured</option>
+        <option value="MOST_FUNDED">Most Funded (₹)</option>
+        <option value="CLOSEST_GOAL">Closest to Goal (%)</option>
+        <option value="ENDING_SOON">Ending Soonest</option>
+      </select>
+    </div>
+
+    <div class="campaign-grid" id="exploreGrid"></div>
+  </main>
+
+  <div id="footer-slot"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function refreshCurrentPage() {
+      const query = document.getElementById("searchInput").value.toLowerCase().trim();
+      const cat = document.getElementById("categoryFilter").value;
+      const status = document.getElementById("statusFilter").value;
+      const sort = document.getElementById("sortFilter").value;
+      const bookmarks = Store.getBookmarks();
+
+      let list = Store.getCampaigns().filter(c => c.status === "approved");
+
+      if (query) {
+        list = list.filter(c =>
+          c.title.toLowerCase().includes(query) ||
+          c.org.toLowerCase().includes(query) ||
+          c.location.toLowerCase().includes(query)
+        );
+      }
+
+      if (cat !== "ALL") {
+        list = list.filter(c => c.category === cat);
+      }
+
+      if (status === "URGENT") {
+        list = list.filter(c => c.urgent);
+      } else if (status === "SAVED") {
+        list = list.filter(c => bookmarks.includes(c.id));
+      }
+
+      if (sort === "MOST_FUNDED") {
+        list.sort((a, b) => b.raised - a.raised);
+      } else if (sort === "CLOSEST_GOAL") {
+        list.sort((a, b) => (b.raised / b.goal) - (a.raised / a.goal));
+      } else if (sort === "ENDING_SOON") {
+        list.sort((a, b) => a.daysLeft - b.daysLeft);
+      }
+
+      document.getElementById("resultCountBadge").textContent = `Showing ${list.length} verified campaign(s)`;
+
+      const grid = document.getElementById("exploreGrid");
+      if (list.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align:center; padding:3rem; background:var(--bg-secondary); border-radius:var(--radius-md); border:1px solid var(--border);">
+            <h3>No matching campaigns found</h3>
+            <p style="color:var(--text-secondary); margin:0.5rem 0 1rem;">Try resetting your search filters or explore all categories.</p>
+            <button class="btn btn-primary btn-sm" onclick="resetFilters()">Reset Filters</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = list.map(buildCampaignCard).join("");
+    }
+
+    function resetFilters() {
+      document.getElementById("searchInput").value = "";
+      document.getElementById("categoryFilter").value = "ALL";
+      document.getElementById("statusFilter").value = "ALL";
+      document.getElementById("sortFilter").value = "DEFAULT";
+      refreshCurrentPage();
+    }
+
+    document.addEventListener("DOMContentLoaded", refreshCurrentPage);
+  </script>
+  <script src="js/motion.js"></script>
+</body>
+</html>

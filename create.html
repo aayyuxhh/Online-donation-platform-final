@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Start a Campaign — KindredFund</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="navbar-slot"></div>
+
+  <main class="container">
+    <div class="section-header">
+      <div>
+        <h1 class="section-title">Launch a Verified Fundraiser</h1>
+        <p class="section-subtitle">Create a campaign in seconds. Preview how donors will see your card in real time.</p>
+      </div>
+    </div>
+
+    <div class="detail-grid">
+      <!-- Form -->
+      <form id="createCampaignForm" onsubmit="submitNewCampaign(event)" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:2rem; display:flex; flex-direction:column; gap:1.1rem;">
+        <div>
+          <label style="font-weight:700; font-size:0.88rem;">Campaign Title *</label>
+          <input type="text" id="cTitle" class="input-control" required placeholder="e.g. Smart Digital Library for Tribal Village School" oninput="updateLivePreview()">
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div>
+            <label style="font-weight:700; font-size:0.88rem;">Organization / Organizer Name *</label>
+            <input type="text" id="cOrg" class="input-control" required placeholder="e.g. HopeBridge Youth Trust" oninput="updateLivePreview()">
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.88rem;">Category *</label>
+            <select id="cCategory" class="select-control" onchange="updateLivePreview()">
+              <option value="Education">Education</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Environment">Environment</option>
+              <option value="Food & Hunger">Food & Hunger</option>
+              <option value="Animal Welfare">Animal Welfare</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem;">
+          <div>
+            <label style="font-weight:700; font-size:0.88rem;">Goal Amount (₹) *</label>
+            <input type="number" id="cGoal" class="input-control" required min="5000" value="250000" oninput="updateLivePreview()">
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.88rem;">Duration (Days) *</label>
+            <input type="number" id="cDays" class="input-control" required min="5" max="90" value="25" oninput="updateLivePreview()">
+          </div>
+          <div>
+            <label style="font-weight:700; font-size:0.88rem;">City & State *</label>
+            <input type="text" id="cLocation" class="input-control" required placeholder="e.g. Vijayawada, AP" oninput="updateLivePreview()">
+          </div>
+        </div>
+
+        <div>
+          <label style="font-weight:700; font-size:0.88rem;">Cover Image URL</label>
+          <input type="url" id="cImage" class="input-control" value="https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80" oninput="updateLivePreview()">
+        </div>
+
+        <div>
+          <label style="font-weight:700; font-size:0.88rem;">Campaign Story & Impact Plan *</label>
+          <textarea id="cDesc" rows="4" class="textarea-control" required placeholder="Describe the problem, beneficiaries, and how funds will be utilized..." oninput="updateLivePreview()"></textarea>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.88rem; cursor:pointer;">
+          <input type="checkbox" id="cUrgent" onchange="updateLivePreview()"> Mark as Emergency / Urgent Cause
+        </label>
+
+        <div style="display:flex; gap:1rem; margin-top:0.5rem;">
+          <button type="submit" class="btn btn-primary" style="flex:1;">Publish Campaign Immediately 🚀</button>
+          <button type="button" class="btn btn-outline" onclick="submitForReview()">Submit to Admin Queue</button>
+        </div>
+      </form>
+
+      <!-- Live Preview -->
+      <div>
+        <h3 style="margin-bottom:0.8rem;">Live Donor Card Preview</h3>
+        <div id="liveCardPreview"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-slot"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function buildFormObject(status = "approved") {
+      return {
+        id: "camp-" + Math.floor(200 + Math.random() * 800),
+        title: document.getElementById("cTitle").value.trim() || "Your Campaign Headline Appears Here",
+        org: document.getElementById("cOrg").value.trim() || "Your Organization Name",
+        category: document.getElementById("cCategory").value,
+        location: document.getElementById("cLocation").value.trim() || "India",
+        raised: 0,
+        goal: Number(document.getElementById("cGoal").value) || 250000,
+        donorsCount: 0,
+        daysLeft: Number(document.getElementById("cDays").value) || 25,
+        urgent: document.getElementById("cUrgent").checked,
+        verified: true,
+        status,
+        image: document.getElementById("cImage").value.trim() || "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=900&q=80",
+        description: document.getElementById("cDesc").value.trim() || "Your campaign story will help donors understand the real-world impact of every rupee contributed.",
+        milestones: [
+          { title: "Initial Procurement & Setup", amount: Math.round((Number(document.getElementById("cGoal").value) || 250000) * 0.4), done: false },
+          { title: "Full Beneficiary Deployment", amount: Number(document.getElementById("cGoal").value) || 250000, done: false }
+        ]
+      };
+    }
+
+    function updateLivePreview() {
+      const previewObj = buildFormObject("approved");
+      document.getElementById("liveCardPreview").innerHTML = buildCampaignCard(previewObj);
+    }
+
+    function submitNewCampaign(e) {
+      e.preventDefault();
+      const newCamp = buildFormObject("approved");
+      Store.addCampaign(newCamp);
+      showToast("Campaign published live! Redirecting...");
+      setTimeout(() => {
+        window.location.href = `campaign.html?id=${newCamp.id}`;
+      }, 900);
+    }
+
+    function submitForReview() {
+      const title = document.getElementById("cTitle").value.trim();
+      if (!title) {
+        showToast("Please enter at least a campaign title first.");
+        return;
+      }
+      const pendingCamp = buildFormObject("pending");
+      Store.addCampaign(pendingCamp);
+      showToast("Submitted to Admin Moderation Queue! Check Impact & Admin page.");
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 1000);
+    }
+
+    document.addEventListener("DOMContentLoaded", updateLivePreview);
+  </script>
+  <script src="js/motion.js"></script>
+</body>
+</html>

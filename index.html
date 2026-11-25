@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WILL·INGNESS — A little kindness can change everything</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/marquee.css">
+</head>
+<body>
+  <div id="navbar-slot"></div>
+
+  <!-- India Updates marquee (mounted by js/news-marquee.js) -->
+  <div id="news-ticker-slot" class="news-ticker-slot"></div>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow-label">GIVING, MADE PERSONAL</span>
+        <h1>A little kindness can <em>change</em> everything.</h1>
+        <p class="hero-lead">
+          <strong>WILL·INGNESS</strong> connects everyday people who want to pitch in with neighborhood and grassroots drives doing real work—so you can see where your money goes and how it helps.
+        </p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" onclick="triggerQuickDonate()">Donate Now</button>
+          <a href="explore.html" class="btn btn-outline">Explore Campaigns</a>
+        </div>
+        <div class="hero-stats" id="liveHeroStats"></div>
+      </div>
+
+      <div class="hero-photo-frame" id="heroSpotlightFrame">
+        <!-- Populated dynamically with a real campaign photo -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Quick Donate Bar -->
+  <div style="padding: 0 5%;">
+    <div class="quick-donate-bar">
+      <div>
+        <strong style="font-size:1rem;">Quick Gift</strong>
+        <p style="font-size:0.84rem; color:var(--text-secondary);">Send an instant contribution to a drive that needs support right now</p>
+      </div>
+      <div class="amount-pills" id="quickPills">
+        <button class="amount-pill" onclick="selectQuickAmt(500, this)">₹500</button>
+        <button class="amount-pill selected" onclick="selectQuickAmt(1500, this)">₹1,500</button>
+        <button class="amount-pill" onclick="selectQuickAmt(3000, this)">₹3,000</button>
+        <button class="amount-pill" onclick="selectQuickAmt(5000, this)">₹5,000</button>
+      </div>
+      <button class="btn btn-primary" onclick="triggerQuickDonate()">Give Now</button>
+    </div>
+  </div>
+
+  <!-- Active Campaigns -->
+  <section class="container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Campaigns to Support Right Now</h2>
+        <p class="section-subtitle">Local schools, clinics, kitchens, and rescue teams sharing clear updates as funds arrive.</p>
+      </div>
+      <a href="explore.html" class="btn btn-outline">See All Campaigns →</a>
+    </div>
+
+    <div class="campaign-grid" id="featuredGrid"></div>
+  </section>
+
+  <!-- How It Works & Recent Notes -->
+  <section class="container">
+    <div class="detail-grid">
+      <div>
+        <span class="eyebrow-label">STRAIGHTFORWARD &amp; OPEN</span>
+        <h2 class="section-title" style="margin-bottom:0.5rem;">How Funds Are Tracked</h2>
+        <p class="section-subtitle" style="margin-bottom:1.5rem;">Every campaign breaks its goal into clear steps so supporters aren't left guessing.</p>
+        <div class="milestone-list">
+          <div class="milestone-item">
+            <div class="milestone-icon milestone-done">1</div>
+            <div>
+              <strong>Basic Checks Before Going Live</strong>
+              <p style="font-size:0.88rem; color:var(--text-secondary);">Organizers share who is running the drive, where the work happens, and what each stage costs.</p>
+            </div>
+          </div>
+          <div class="milestone-item">
+            <div class="milestone-icon milestone-done">2</div>
+            <div>
+              <strong>Simple Payments &amp; Receipts</strong>
+              <p style="font-size:0.88rem; color:var(--text-secondary);">Give via UPI, card, or net banking and save a receipt right away for your records.</p>
+            </div>
+          </div>
+          <div class="milestone-item">
+            <div class="milestone-icon milestone-done">3</div>
+            <div>
+              <strong>Step-by-Step Progress</strong>
+              <p style="font-size:0.88rem; color:var(--text-secondary);">Follow raised totals, completed steps, and recent notes from other givers anytime.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sticky-box" style="position:static;">
+        <h3 style="font-family:var(--font-display); font-size:1.65rem; margin-bottom:1rem;">Recent Notes from Givers</h3>
+        <div id="liveDonorFeed" style="display:flex; flex-direction:column; gap:0.85rem;"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-slot"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/news-data.js"></script>
+  <script src="js/news-marquee.js"></script>
+  <script>
+    let quickAmt = 1500;
+
+    function selectQuickAmt(val, el) {
+      quickAmt = val;
+      document.querySelectorAll("#quickPills .amount-pill").forEach(b => b.classList.remove("selected"));
+      el.classList.add("selected");
+    }
+
+    function triggerQuickDonate() {
+      const urgent = Store.getCampaigns().find(c => c.urgent && c.status === "approved") || Store.getCampaigns()[0];
+      openDonateModal(urgent.id, quickAmt);
+    }
+
+    function refreshCurrentPage() {
+      const campaigns = Store.getCampaigns().filter(c => c.status === "approved");
+      const donations = Store.getDonations();
+      const totalRaised = campaigns.reduce((sum, c) => sum + c.raised, 0);
+      const totalDonors = campaigns.reduce((sum, c) => sum + c.donorsCount, 0);
+
+      document.getElementById("liveHeroStats").innerHTML = `
+        <div class="stat-item">
+          <h3 class="stat-ochre">${formatINR(totalRaised)}</h3>
+          <p>Raised so far</p>
+        </div>
+        <div class="stat-item">
+          <h3 class="stat-sky">${totalDonors.toLocaleString()}+</h3>
+          <p>People who chipped in</p>
+        </div>
+        <div class="stat-item">
+          <h3 class="stat-sage">${campaigns.length}</h3>
+          <p>Active drives</p>
+        </div>
+      `;
+
+      const top = campaigns[0];
+      const pct = calcPercent(top.raised, top.goal);
+      document.getElementById("heroSpotlightFrame").innerHTML = `
+        <div class="hero-photo-wrap">
+          <img src="${top.image}" alt="${top.title}">
+          <span class="hero-photo-tag">${top.location} • ${pct}% funded</span>
+        </div>
+        <div class="hero-photo-footer">
+          <div>
+            <div style="font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase;">${top.org}</div>
+            <div style="font-weight:700; font-size:0.96rem;">${top.title}</div>
+          </div>
+          <a href="campaign.html?id=${top.id}" class="btn btn-outline btn-sm">Open</a>
+        </div>
+      `;
+
+      document.getElementById("featuredGrid").innerHTML = campaigns
+        .slice(0, 3)
+        .map(buildCampaignCard)
+        .join("");
+
+      document.getElementById("liveDonorFeed").innerHTML = donations
+        .slice(0, 5)
+        .map(d => `
+          <div style="padding:0.75rem; background:var(--bg-tertiary); border-radius:var(--radius-sm); border:1px solid var(--border);">
+            <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+              <strong>${d.donorName}</strong>
+              <span style="color:var(--success); font-weight:800;">+${formatINR(d.amount)}</span>
+            </div>
+            <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;">${d.campaignTitle}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:3px;">"${d.message}"</div>
+          </div>
+        `).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", refreshCurrentPage);
+  </script>
+  <script src="js/motion.js"></script>
+</body>
+</html>

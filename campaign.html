@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Details — KindredFund</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="navbar-slot"></div>
+
+  <main class="container" id="campaignDetailRoot"></main>
+
+  <div id="footer-slot"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    function getQueryParam(key) {
+      return new URLSearchParams(window.location.search).get(key);
+    }
+
+    function copyShareLink() {
+      navigator.clipboard.writeText(window.location.href);
+      showToast("Campaign link copied to clipboard! Share to amplify impact.");
+    }
+
+    function updateImpactCalc(val) {
+      const units = Math.max(1, Math.floor(val / 250));
+      document.getElementById("calcOutput").textContent =
+        `₹${Number(val).toLocaleString("en-IN")} directly funds ~${units} essential beneficiary kit(s) / meal packs with 0% deduction.`;
+    }
+
+    function refreshCurrentPage() {
+      const id = getQueryParam("id") || "camp-101";
+      const camp = Store.getCampaigns().find(c => c.id === id) || Store.getCampaigns()[0];
+      const pct = calcPercent(camp.raised, camp.goal);
+      const campDonations = Store.getDonations().filter(d => d.campaignId === camp.id);
+
+      document.title = `${camp.title} — KindredFund`;
+
+      document.getElementById("campaignDetailRoot").innerHTML = `
+        <div style="margin-bottom:1.2rem;">
+          <a href="explore.html" style="color:var(--accent); font-weight:700; font-size:0.9rem;">← Back to All Campaigns</a>
+        </div>
+
+        <div class="detail-grid">
+          <!-- Left Column -->
+          <div>
+            <div style="display:flex; gap:0.5rem; margin-bottom:0.8rem; flex-wrap:wrap;">
+              <span class="badge-pill" style="margin:0;">${camp.category}</span>
+              <span class="badge-pill" style="margin:0; background:rgba(16,185,129,0.12); color:var(--success);">✔ 80G Tax Certified</span>
+              <span class="badge-pill" style="margin:0; background:var(--bg-tertiary); color:var(--text-secondary);">📍 ${camp.location}</span>
+            </div>
+
+            <h1 style="font-size:2.1rem; line-height:1.2; margin-bottom:1rem;">${camp.title}</h1>
+            <p style="font-size:0.95rem; color:var(--text-secondary); margin-bottom:1.2rem;">
+              Organized by <strong style="color:var(--text-primary);">${camp.org}</strong> • Audited Beneficiary Account
+            </p>
+
+            <img src="${camp.image}" alt="${camp.title}" style="width:100%; height:380px; object-fit:cover; border-radius:var(--radius-md); margin-bottom:1.8rem;">
+
+            <h3 style="margin-bottom:0.6rem;">About This Initiative</h3>
+            <p style="color:var(--text-secondary); font-size:1.02rem; margin-bottom:2rem;">${camp.description}</p>
+
+            <!-- Interactive Impact Simulator -->
+            <div style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-md); padding:1.4rem; margin-bottom:2rem;">
+              <h4>🧮 See Your Rupee-for-Rupee Impact</h4>
+              <input type="range" min="250" max="25000" step="250" value="2500" style="width:100%; margin:0.9rem 0; accent-color:var(--accent);" oninput="updateImpactCalc(this.value)">
+              <p id="calcOutput" style="font-weight:700; color:var(--accent); font-size:0.95rem;">
+                ₹2,500 directly funds ~10 essential beneficiary kit(s) / meal packs with 0% deduction.
+              </p>
+            </div>
+
+            <!-- Fund Utilization Milestones -->
+            <h3>Fund Utilization Milestones</h3>
+            <div class="milestone-list">
+              ${camp.milestones.map((m, idx) => `
+                <div class="milestone-item">
+                  <div class="milestone-icon ${m.done ? 'milestone-done' : 'milestone-pending'}">
+                    ${m.done ? '✓' : idx + 1}
+                  </div>
+                  <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between;">
+                      <strong>${m.title}</strong>
+                      <span style="font-weight:700; color:var(--accent);">${formatINR(m.amount)}</span>
+                    </div>
+                    <span style="font-size:0.82rem; color:var(--text-secondary);">
+                      ${m.done ? "Verified & Disbursed" : "Scheduled upon target unlock"}
+                    </span>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+
+            <!-- Donor Wall for this Campaign -->
+            <h3 style="margin:2rem 0 1rem;">Words of Support (${campDonations.length})</h3>
+            <div style="display:flex; flex-direction:column; gap:0.8rem;">
+              ${campDonations.length ? campDonations.map(d => `
+                <div style="background:var(--bg-secondary); border:1px solid var(--border); padding:1rem; border-radius:var(--radius-sm);">
+                  <div style="display:flex; justify-content:space-between;">
+                    <strong>${d.donorName}</strong>
+                    <span style="color:var(--success); font-weight:800;">${formatINR(d.amount)}</span>
+                  </div>
+                  <p style="font-size:0.88rem; color:var(--text-secondary); margin-top:4px;">"${d.message}"</p>
+                  <span style="font-size:0.75rem; color:var(--text-muted);">${d.date} • via ${d.method}</span>
+                </div>
+              `).join("") : `<p style="color:var(--text-secondary);">Be the first to donate and leave a message!</p>`}
+            </div>
+          </div>
+
+          <!-- Right Sticky Donation Card -->
+          <aside class="sticky-box">
+            <div style="font-size:2rem; font-weight:800; color:var(--text-primary);">${formatINR(camp.raised)}</div>
+            <p style="font-size:0.9rem; color:var(--text-secondary); margin-bottom:1rem;">
+              raised of <strong>${formatINR(camp.goal)}</strong> goal
+            </p>
+
+            <div class="progress-bar" style="height:10px; margin-bottom:1rem;">
+              <div class="progress-fill" style="width:${pct}%"></div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:0.9rem 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:1.2rem;">
+              <div>
+                <strong style="font-size:1.2rem;">${camp.donorsCount}</strong>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">Total Donors</div>
+              </div>
+              <div>
+                <strong style="font-size:1.2rem;">${camp.daysLeft} Days</strong>
+                <div style="font-size:0.8rem; color:var(--text-secondary);">Remaining</div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%; padding:0.9rem; font-size:1rem; margin-bottom:0.75rem;" onclick="openDonateModal('${camp.id}')">
+              Donate Now ♥
+            </button>
+            <button class="btn btn-outline" style="width:100%;" onclick="copyShareLink()">
+              🔗 Share Fundraiser
+            </button>
+
+            <p style="font-size:0.78rem; color:var(--text-muted); text-align:center; margin-top:1rem;">
+              Protected by KindredFund Donor Guarantee. Instant 80G receipt issued after verification.
+            </p>
+          </aside>
+        </div>
+      `;
+    }
+
+    document.addEventListener("DOMContentLoaded", refreshCurrentPage);
+  </script>
+  <script src="js/motion.js"></script>
+</body>
+</html>
